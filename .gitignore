@@ -1,0 +1,19 @@
+# 機密情報(Googleサービスアカウント秘密鍵)
+bitmex.json
+
+# Chromeプロファイル(Cookie等の機密情報を含む)
+DontTouch/
+
+# Python仮想環境・キャッシュ
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# PyInstallerビルド成果物
+build/
+dist/
+*.spec
+
+# OS
+.DS_Store
