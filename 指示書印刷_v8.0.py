@@ -305,6 +305,8 @@ def click_print_button(driver):
     # 「注文ページを印刷」は独立したボタンではなく、「その他の操作」ドロップダウンメニュー
     # (id="order-details-more-actions-menu")内の項目として実装されている。
     # そのため先にメニューを開いてから項目をクリックする必要がある。
+    main_handle = driver.current_window_handle
+
     trigger = find_by_commandfor(driver, 'order-details-more-actions-menu')
     if trigger is None:
         raise NoSuchElementException("「その他の操作」ボタンが見つかりませんでした")
@@ -317,15 +319,26 @@ def click_print_button(driver):
     if menu_item is None:
         raise NoSuchElementException("「注文ページを印刷」メニュー項目が見つかりませんでした")
     click_element(driver, menu_item)
+    time.sleep(1.5)
+
+    # 印刷が新しいタブ/ウィンドウを開くことがあるため、後続処理のために必ず
+    # 元のタブへ戻る(そうしないと以降の要素検索が別タブに対して行われてしまう)
+    if driver.current_window_handle != main_handle:
+        driver.switch_to.window(main_handle)
 
 
-def click_next_order_button(driver):
+def click_next_order_button(driver, retries=3, wait_between=1.5):
     # 旧UIの id="nextURL" ボタンは廃止され、aria-label="Go to next page" の
-    # ボタン(Shadow DOM内)に変わっている
-    btn = find_in_shadow_by_aria(driver, 'Go to next page', exact=True)
-    if btn is None:
-        raise NoSuchElementException("「次へ」ボタンが見つかりませんでした")
-    click_element(driver, btn)
+    # ボタン(Shadow DOM内)に変わっている。印刷処理の直後はDOMやフォーカスが
+    # 一時的に不安定なことがあるため、複数回リトライする。
+    last_error = NoSuchElementException("「次へ」ボタンが見つかりませんでした")
+    for attempt in range(retries):
+        btn = find_in_shadow_by_aria(driver, 'Go to next page', exact=True)
+        if btn is not None:
+            click_element(driver, btn)
+            return
+        time.sleep(wait_between)
+    raise last_error
 
 
 _DATE_TEXT_PATTERN = re.compile(r'\d{4}年\d{1,2}月\d{1,2}日')
