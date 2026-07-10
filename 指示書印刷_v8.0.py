@@ -327,16 +327,21 @@ def click_print_button(driver):
         driver.switch_to.window(main_handle)
 
 
+_NEXT_PAGE_LABELS = ['次のページへ移動', 'Go to next page']
+
+
 def click_next_order_button(driver, retries=3, wait_between=1.5):
-    # 旧UIの id="nextURL" ボタンは廃止され、aria-label="Go to next page" の
-    # ボタン(Shadow DOM内)に変わっている。印刷処理の直後はDOMやフォーカスが
-    # 一時的に不安定なことがあるため、複数回リトライする。
+    # 旧UIの id="nextURL" ボタンは廃止され、aria-label="次のページへ移動"
+    # (表示言語設定によっては英語の"Go to next page")のボタン(Shadow DOM内)に
+    # 変わっている。印刷処理の直後はDOMやフォーカスが一時的に不安定なことが
+    # あるため、複数回リトライする。
     last_error = NoSuchElementException("「次へ」ボタンが見つかりませんでした")
     for attempt in range(retries):
-        btn = find_in_shadow_by_aria(driver, 'Go to next page', exact=True)
-        if btn is not None:
-            click_element(driver, btn)
-            return
+        for label in _NEXT_PAGE_LABELS:
+            btn = find_in_shadow_by_aria(driver, label, exact=True)
+            if btn is not None:
+                click_element(driver, btn)
+                return
         time.sleep(wait_between)
     raise last_error
 
