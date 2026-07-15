@@ -23,45 +23,32 @@ from selenium.common.exceptions import ElementClickInterceptedException, NoSuchE
 import platform
 
 def launch_chrome():
-    # Chromeをリモートデバッグモードで起動
+    # Chromeをリモートデバッグモードで起動。
+    # 専用のChromeプロファイル(Cookie等)をDontTouchフォルダに保管して安定動作させる
+    # ため、DontTouchフォルダ内に事前配置した起動用スクリプト経由で起動する。
+    # (DontTouchはユーザーが事前に用意するフォルダで、gitリポジトリには含まれない。
+    #  リポジトリ直下の openChrome.bat / openChrome.sh をコピーして配置すること)
     current_os = platform.system()
-    
+
     try:
         base_dir = os.path.dirname(sys.argv[0])
     except Exception:
         base_dir = os.path.dirname(__file__)
-        
-    user_data_dir = os.path.abspath(os.path.join(base_dir, 'DontTouch'))
-    os.makedirs(user_data_dir, exist_ok=True)
 
     if current_os == 'Windows':
-        chrome_paths = [
-            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-        ]
-        chrome_path = None
-        for path in chrome_paths:
-            if os.path.exists(path):
-                chrome_path = path
-                break
-        if chrome_path:
-            cmd = f'"{chrome_path}" --remote-debugging-port=9222 --user-data-dir="{user_data_dir}" --kiosk-printing --start-maximized'
-            subprocess.Popen(cmd, shell=True)
+        bat_file = os.path.join(base_dir, 'DontTouch', 'openChrome.bat')
+        if os.path.exists(bat_file):
+            subprocess.Popen([bat_file], shell=True)
         else:
-            print("Chromeの実行ファイルが見つかりません。")
+            print(f"起動用batファイルが見つかりません: {bat_file}\n"
+                  f"リポジトリ直下の openChrome.bat を DontTouch フォルダにコピーしてください。")
     elif current_os == 'Darwin':
-        chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-        if os.path.exists(chrome_path):
-            cmd = [
-                chrome_path,
-                "--remote-debugging-port=9222",
-                f"--user-data-dir={user_data_dir}",
-                "--kiosk-printing",
-                "--start-maximized"
-            ]
-            subprocess.Popen(cmd)
+        sh_file = os.path.join(base_dir, 'DontTouch', 'openChrome.sh')
+        if os.path.exists(sh_file):
+            subprocess.Popen(['bash', sh_file])
         else:
-            print("Chromeの実行ファイルが /Applications/Google Chrome.app に見つかりません。")
+            print(f"起動用シェルスクリプトが見つかりません: {sh_file}\n"
+                  f"リポジトリ直下の openChrome.sh を DontTouch フォルダにコピーしてください。")
     else:
         print(f"未対応のOSです: {current_os}")
 
